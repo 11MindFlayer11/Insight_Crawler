@@ -99,7 +99,7 @@ def analyze_website(request: AnalysisRequest):
                 outbound_links.append(link)
 
         # Scrape core pages
-        homepage_content = requests.get(url).text
+        homepage_content = html
         core_urls = sm.get_core_pages(url, homepage_content)
 
         core_content = []
