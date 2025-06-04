@@ -36,6 +36,3 @@ Installation steps:
     - brew services start redis
   - Test redis with
     - redis-cli ping
-    
-    -
-      
