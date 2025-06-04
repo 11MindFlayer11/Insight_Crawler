@@ -1,5 +1,5 @@
 # main.py
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
 from typing import List
 import scrapermod as sm
@@ -10,11 +10,19 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import tldextract
-import requests
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import logging
+import os
+from urllib.parse import urlparse
 
+# Initialize fast api and logging
 app = FastAPI()
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 
 # Define request/response models
@@ -31,9 +39,34 @@ class AnalysisResponse(BaseModel):
     blog_titles: str
 
 
+# --- Startup Validation ---
+@app.on_event("startup")
+def validate_environment():
+    required_vars = ["GITHUB_TOKEN"]  # Add your required vars
+    missing = [var for var in required_vars if not os.getenv(var)]
+    if missing:
+        logger.critical(f"Missing environment variables: {', '.join(missing)}")
+        raise RuntimeError("Missing required environment variables")
+
+
+# Handling parsing error
+def safe_parse_html(html: str) -> BeautifulSoup:
+    try:
+        return BeautifulSoup(html, "html.parser")
+    except Exception as e:
+        logger.error(f"HTML parsing error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Failed to parse HTML content",
+        )
+
+
 # Use caching functions from scrapermod
-get_cache = cache.get_cache
-set_cache = cache.set_cache
+try:
+    get_cache = cache.get_cache
+    set_cache = cache.set_cache
+except cache.CacheConnectionError:
+    raise HTTPException(503, "Cache service unavailable")
 
 
 @app.post("/analyze", response_model=AnalysisResponse)
@@ -51,6 +84,14 @@ def analyze_website(request: AnalysisRequest):
 
         # Load the site
         url = request.url
+
+        # Validate URL Structure
+        parsed_url = urlparse(str(request.url))
+        if not parsed_url.scheme or not parsed_url.netloc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid URL structure",
+            )
         driver.get(url)
         try:
             WebDriverWait(driver, 10).until(
@@ -64,7 +105,7 @@ def analyze_website(request: AnalysisRequest):
         driver.quit()
 
         # Parse HTML
-        soup = BeautifulSoup(html, "html.parser")
+        soup = safe_parse_html(html)
 
         # Extract meta info
         title_tag = soup.title.string if soup.title else "No <title> found"
