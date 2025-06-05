@@ -1,6 +1,5 @@
-# Website Details Scraper
-
-Website Details Scraper is a Python-based tool that scrapes and extracts metadata from websites and outputs the results in a downloadable JSON file. It is useful for tasks like SEO audits, web crawling, and data analysis.
+# Insight Crawler
+Insight Crawler is a Python-based tool that scrapes and extracts metadata from websites and outputs the results in a downloadable JSON file. It is useful for tasks like SEO audits, web crawling, and data analysis.
 
 ## Features
 
