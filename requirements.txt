@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+requests
+beautifulsoup4
+openai
+tldextract
+redis
+python-dotenv
+selenium
+json
+pydantic
+yake

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Website Analyzer</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+    input, button { padding: 10px; margin: 10px 0; width: 100%; }
+    pre { background: #f0f0f0; padding: 15px; overflow: auto; }
+    .button-group { display: flex; gap: 10px; }
+    .button-group button { flex: 1; }
+  </style>
+</head>
+<body>
+  <h1>Website Analyzer</h1>
+  <input type="text" id="urlInput" placeholder="Enter website URL (e.g. https://example.com)" />
+
+  <div class="button-group">
+    <button onclick="analyze()">Analyze</button>
+    <button onclick="suggestBlogs()">Suggest Blogs</button>
+  </div>
+
+  <pre id="resultBox">Result will appear here...</pre>
+  <button onclick="downloadResult()" disabled id="downloadBtn">Download JSON</button>
+
+  <script>
+    let lastResult = null;
+
+    async function analyze() {
+      await fetchAndDisplay('/analyze');
+    }
+
+    async function suggestBlogs() {
+      await fetchAndDisplay('/suggest-blogs');
+    }
+
+    async function fetchAndDisplay(endpoint) {
+      const url = document.getElementById('urlInput').value.trim();
+      const resultBox = document.getElementById('resultBox');
+      const downloadBtn = document.getElementById('downloadBtn');
+
+      if (!url.startsWith("http")) {
+        resultBox.textContent = "Please enter a valid URL starting with http/https.";
+        return;
+      }
+
+      resultBox.textContent = `Fetching from ${endpoint}...`;
+      try {
+        const response = await fetch(`http://localhost:8000${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        if (!response.ok) throw new Error(await response.text());
+
+        const data = await response.json();
+        lastResult = data;
+        resultBox.textContent = JSON.stringify(data, null, 2);
+        downloadBtn.disabled = false;
+      } catch (err) {
+        resultBox.textContent = "Error: " + err.message;
+        downloadBtn.disabled = true;
+      }
+    }
+
+    function downloadResult() {
+      if (!lastResult) return;
+
+      const blob = new Blob([JSON.stringify(lastResult, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'result.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  </script>
+</body>
+</html>
