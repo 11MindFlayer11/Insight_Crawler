@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Scraper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-section {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .form-section h2 {
+            color: #444;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        input[type="url"] {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        input[type="url"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #667eea;
+        }
+
+        .result-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .meta-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .meta-info strong {
+            color: #555;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .tag {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .link-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 10px;
+            background: #f8f9fa;
+        }
+
+        .link-item {
+            padding: 8px;
+            margin: 4px 0;
+            background: white;
+            border-radius: 6px;
+            word-break: break-all;
+            font-size: 14px;
+            border-left: 3px solid #667eea;
+        }
+
+        .content-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 15px;
+            border: 1px solid #e1e5e9;
+        }
+
+        .error {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border-left: 5px solid #d63031;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Website Scraper</h1>
+        
+        <!-- Full Analysis Section -->
+        <div class="form-section">
+            <h2>📊 Complete Website Analysis</h2>
+            <div class="input-group">
+                <input type="url" id="analyzeUrl" placeholder="https://example.com" required>
+                <button onclick="analyzeWebsite()">Analyze</button>
+            </div>
+            <div id="analyzeLoading" class="loading">
+                <div class="spinner"></div>
+                Analyzing website... This may take a moment.
+            </div>
+            <div id="analyzeResults" class="results"></div>
+        </div>
+
+        <!-- Blog Suggestions Section -->
+        <div class="form-section">
+            <h2>📝 Blog Title Suggestions</h2>
+            <div class="input-group">
+                <input type="url" id="blogUrl" placeholder="https://example.com" required>
+                <button onclick="suggestBlogs()">Get Suggestions</button>
+            </div>
+            <div id="blogLoading" class="loading">
+                <div class="spinner"></div>
+                Generating blog suggestions...
+            </div>
+            <div id="blogResults" class="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000'; // Update this to your API endpoint
+
+        async function analyzeWebsite() {
+            const url = document.getElementById('analyzeUrl').value;
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            const loading = document.getElementById('analyzeLoading');
+            const results = document.getElementById('analyzeResults');
+            
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            results.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Analysis failed');
+                }
+
+                displayAnalysisResults(data);
+            } catch (error) {
+                results.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            } finally {
+                loading.style.display = 'none';
+                results.style.display = 'block';
+            }
+        }
+
+        async function suggestBlogs() {
+            const url = document.getElementById('blogUrl').value;
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            const loading = document.getElementById('blogLoading');
+            const results = document.getElementById('blogResults');
+            
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            results.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/suggest-blogs`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Blog suggestion failed');
+                }
+
+                displayBlogResults(data);
+            } catch (error) {
+                results.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            } finally {
+                loading.style.display = 'none';
+                results.style.display = 'block';
+            }
+        }
+
+        function displayAnalysisResults(data) {
+            const results = document.getElementById('analyzeResults');
+            
+            let html = `
+                <div class="result-card">
+                    <h3>🏷️ Meta Information</h3>
+                    <div class="meta-info">
+                        <strong>Title:</strong> ${data.meta.title}<br>
+                        <strong>Description:</strong> ${data.meta.description}<br>
+                        <strong>H1 Tags:</strong> ${data.meta.H1s.join(', ') || 'None found'}
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <h3>🔗 Outbound Links (${data.outbound_links.length})</h3>
+                    <div class="link-list">
+                        ${data.outbound_links.map(link => `<div class="link-item">${link}</div>`).join('') || '<div class="link-item">No outbound links found</div>'}
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <h3>🏷️ Keywords</h3>
+                    <div class="tag-list">
+                        ${data.keywords.map(keyword => `<span class="tag">${keyword}</span>`).join('')}
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <h3>🎯 Offerings</h3>
+                    <div class="content-section">${data.offerings}</div>
+                </div>
+
+                <div class="result-card">
+                    <h3>📢 Channels</h3>
+                    <div class="content-section">${data.channels}</div>
+                </div>
+
+                <div class="result-card">
+                    <h3>📝 Blog Title Suggestions</h3>
+                    <div class="content-section">${data.blog_titles}</div>
+                </div>
+            `;
+            
+            results.innerHTML = html;
+        }
+
+        function displayBlogResults(data) {
+            const results = document.getElementById('blogResults');
+            
+            let html = `
+                <div class="result-card">
+                    <h3>📝 Blog Title Suggestions</h3>
+                    <div class="content-section">${data.titles}</div>
+                </div>
+            `;
+            
+            results.innerHTML = html;
+        }
+
+        // Allow Enter key to submit forms
+        document.getElementById('analyzeUrl').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeWebsite();
+            }
+        });
+
+        document.getElementById('blogUrl').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                suggestBlogs();
+            }
+        });
+    </script>
+</body>
+</html>
