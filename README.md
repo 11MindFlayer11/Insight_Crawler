@@ -1,24 +1,132 @@
 # Insight Crawler
-Insight Crawler is a Python-based tool that scrapes and extracts metadata from websites and outputs the results in a downloadable JSON file. It is useful for tasks like SEO audits, web crawling, and data analysis.
+
+A powerful web crawling and analysis tool that provides insights about websites using AI-powered content analysis, keyword extraction, and smart caching.
 
 ## Features
 
-- Scrapes website metadata including:
-  - Page Title
-  - Meta Description
-  - Meta Keywords
-  - Open Graph Tags (og:title, og:description, etc.)
-- Command-line interface for quick execution
-- Suggests probable **target keywords**
-- Uses **any LLM** to:
-  - Summarize what the company offers
-  - Suggest which marketing channels might work best (based on product type)
-  - Includes a `/suggest-blogs` endpoint to return 3 SEO-optimized blog title suggestions per website
-- Outputs results in a downloadable JSON file
+- Website content analysis and summarization
+- Core page identification and scraping
+- Keyword extraction using YAKE!
+- AI-powered content summarization using GPT-4.1-mini
+- Outbound link analysis
+- Redis-based caching system
+- Blog title suggestions
+- Meta information extraction
 
-## It requires a running local redis server
+## Project Structure
 
-Installation steps:
+```
+Insight_Crawler/
+├── main.py
+├── scrapermod.py
+├── llm.py
+├── cache.py
+├── requirements.txt
+└── README.md
+```
+
+## Prerequisites
+
+- Python 3.x
+- Redis server running locally on port 6379
+- Chrome/Chromium (for Selenium WebDriver)
+- GitHub Token for AI model access
+
+## Environment Variables
+
+Required environment variables:
+- `GITHUB_TOKEN`: GitHub token for accessing the AI model endpoint
+
+## Installation
+
+1. Clone the repository
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+3. Ensure Redis is running locally
+4. Set up required environment variables
+
+## API Endpoints
+
+### POST /analyze
+Performs comprehensive website analysis.
+
+Request body:
+```json
+{
+    "url": "https://example.com"
+}
+```
+
+Response includes:
+- Meta information (title, description, H1 tags)
+- Outbound links
+- Keywords
+- AI-generated offerings summary
+- Marketing channel suggestions
+- Blog title suggestions
+
+### POST /suggest-blogs
+Generates blog title suggestions for a website.
+
+Request body:
+```json
+{
+    "url": "https://example.com"
+}
+```
+
+## Components
+
+### Main Application (main.py)
+- FastAPI application setup
+- Route handlers for analysis and blog suggestions
+- Selenium integration for dynamic content
+- Error handling and validation
+
+### Scraper Module (scrapermod.py)
+- Core page identification
+- Content scraping and cleaning
+- Keyword extraction using YAKE!
+- URL processing and validation
+
+### LLM Integration (llm.py)
+- OpenAI GPT-4.1-mini integration
+- Content summarization
+- Marketing channel analysis
+- Blog title generation
+
+### Caching System (cache.py)
+- Redis integration
+- Cache management
+- Error handling and fallback mechanisms
+
+## Error Handling
+
+The application includes comprehensive error handling for:
+- Invalid URLs
+- Failed scraping attempts
+- LLM service unavailability
+- Cache connection issues
+- HTML parsing errors
+
+## Caching Strategy
+
+- Analysis results are cached for 2 hours (7200 seconds)
+- Separate caching for full analysis and blog suggestions
+- Fallback mechanisms when cache is unavailable
+
+## Running the Application
+
+Start the server:
+```bash
+python main.py
+```
+
+The application will run on `http://0.0.0.0:8000`
+
+#Note: If you face any problems in installing the redis server, here are the steps:
 - Windows
   - On Powershell, run the following commands:
     - wsl --install 
@@ -35,28 +143,3 @@ Installation steps:
     - brew services start redis
   - Test redis with
     - redis-cli ping
-## Error Handling & Logging
-
-Robust error handling has been implemented to ensure smooth operation and easier debugging. The tool logs various types of failures with clear messages.
-
-### Handled Errors:
-
-1. **Environment Variable Errors**  
-   - Missing or improperly configured API keys and required environment variables are detected and logged.
-
-2. **URL Structure Errors**  
-   - Malformed, unreachable, or unsupported URLs trigger an error and are excluded from processing.
-
-3. **Parsing Errors**  
-   - Issues during HTML parsing or metadata extraction (e.g., missing tags, malformed HTML) are caught and logged.
-
-4. **Redis Failures**  
-   - Errors connecting to or interacting with the local Redis server are logged with suggested resolutions.
-
-5. **LLM API Failures**  
-   - Failures in interacting with the language model API (timeouts, authentication errors, malformed responses) are captured and logged.
-
-### Logging Output
-
-- All errors are logged to the console with context-specific messages.
-- Optionally, logs can be extended to a file (e.g., `error.log`) for persistent debugging.
